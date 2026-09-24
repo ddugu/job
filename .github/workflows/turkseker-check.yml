@@ -44,6 +44,10 @@ jobs:
         continue-on-error: false
 
       - name: seen.json değiştiyse commit et ve push yap
+        # Önceki adım exit 3 (ntfy başarısız) ile bitmiş olsa bile çalış.
+        # ENGINEER_MATCH için ntfy başarısız olursa ilan seen.json'a yazılmamıştır;
+        # diğer değişiklikler (NO_MATCH vb.) varsa yine de commit edilmeli.
+        if: always()
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
