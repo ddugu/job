@@ -1,0 +1,59 @@
+name: Türkşeker Duyuru Kontrolü
+
+on:
+  schedule:
+    # Her 15 dakikada bir (UTC — Türkiye saati UTC+3)
+    - cron: "*/15 * * * *"
+  workflow_dispatch: # GitHub Actions ekranından elle çalıştırma
+
+# Aynı anda sadece bir workflow çalışsın; önceki bitmeden yeni başlamasın.
+concurrency:
+  group: turkseker-check
+  cancel-in-progress: false
+
+# seen.json'u repo'ya geri yazabilmek için write yetkisi gerekli.
+permissions:
+  contents: write
+
+jobs:
+  check:
+    name: Duyuruları kontrol et
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repo'yu indir (seen.json dahil)
+        uses: actions/checkout@v4
+
+      - name: Python 3.11 kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Bağımlılıkları yükle
+        run: pip install -r requirements.txt
+
+      - name: Türkşeker'i kontrol et
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          PYTHONIOENCODING: "utf-8"
+          PYTHONUNBUFFERED: "1"
+        run: python checker.py
+        # Exit code 0 → normal; 3 → ntfy başarısız (ilan kaydedilmedi, tekrar denenecek).
+        # Exit code 2 → sayfada duyuru bulunamadı. İkisi de workflow'u başarısız saymaz.
+        continue-on-error: false
+
+      - name: seen.json değiştiyse commit et ve push yap
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add data/seen.json
+
+          # Değişiklik yoksa commit oluşturma
+          if git diff --cached --quiet; then
+            echo "seen.json değişmedi, commit atlanıyor."
+          else
+            git commit -m "chore: update seen announcements [skip ci]"
+            git push
+          fi

@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Ortam dosyaları — GİZLİ BİLGİ İÇEREBİLİR
+.env
+.env.*
+
+# data/seen.json GİT'E DAHİL EDİLMELİ — aşağıdaki satırı silme
+# data/seen.json  ← BURASI KASITLI OLARAK YORUM SATIRI
